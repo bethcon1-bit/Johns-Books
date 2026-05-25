@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="My Books" />
+  <title>My Book Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; background: #f5f0e8; font-family: Georgia, 'Times New Roman', serif; color: #2c1f0e; }
+    #app { max-width: 900px; margin: 0 auto; min-height: 100vh; }
+
+    /* HEADER */
+    .header { background: #2c1f0e; color: #f5f0e8; padding: 18px 20px 14px; border-bottom: 4px solid #c8860a; }
+    .header h1 { font-size: 26px; letter-spacing: 1px; }
+    .header p { font-size: 13px; color: #c8860a; font-style: italic; margin-top: 2px; }
+
+    /* NAV */
+    .nav { display: flex; gap: 6px; padding: 10px 12px; background: #3d2b10; flex-wrap: wrap; }
+    .nav button { padding: 10px 14px; font-size: 15px; border-radius: 8px; border: none; cursor: pointer; font-family: Georgia, serif; transition: all 0.15s; }
+    .nav button.active { background: #c8860a; color: #fff; font-weight: bold; }
+    .nav button:not(.active) { background: #5a3e20; color: #e8d5b0; }
+
+    /* BODY */
+    .body { padding: 16px; }
+
+    /* STATS */
+    .stats-row { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+    .stat-card { flex: 1 1 120px; border-radius: 12px; padding: 14px 12px; text-align: center; border: 1px solid rgba(0,0,0,0.1); }
+    .stat-num { font-size: 32px; font-weight: bold; color: #2c1f0e; line-height: 1; }
+    .stat-label { font-size: 12px; color: #5a3e20; margin-top: 4px; }
+
+    /* SECTION TITLE */
+    .section-title { font-size: 18px; font-weight: bold; color: #5a3e20; border-bottom: 2px solid #c8860a; padding-bottom: 6px; margin-bottom: 12px; margin-top: 18px; }
+
+    /* BOOK CARD */
+    .book-card { background: #fff; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; border: 1px solid #e0d0b0; display: flex; align-items: center; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .book-spine { width: 8px; border-radius: 4px; align-self: stretch; min-height: 48px; flex-shrink: 0; cursor: pointer; }
+    .book-info { flex: 1; cursor: pointer; min-width: 0; }
+    .book-title { font-size: 16px; font-weight: bold; color: #2c1f0e; margin-bottom: 2px; }
+    .book-meta { font-size: 13px; color: #6b4f2a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .book-stars { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+    .stars-row { display: flex; gap: 1px; }
+    .star { font-size: 24px; cursor: pointer; user-select: none; line-height: 1; }
+    .star.on { color: #c8860a; }
+    .star.off { color: #d4c4a0; }
+    .star-label { font-size: 11px; color: #a08060; cursor: pointer; }
+
+    /* BUTTONS */
+    .big-btn { width: 100%; padding: 15px; font-size: 17px; font-weight: bold; border-radius: 10px; border: none; cursor: pointer; font-family: Georgia, serif; margin-bottom: 10px; color: #fff; }
+    .back-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; font-size: 15px; border-radius: 8px; border: 2px solid #c8860a; background: transparent; color: #c8860a; cursor: pointer; font-family: Georgia, serif; margin-bottom: 14px; }
+
+    /* INPUTS */
+    .field-label { font-size: 15px; font-weight: bold; color: #5a3e20; margin-bottom: 6px; display: block; margin-top: 2px; }
+    input[type=text], textarea, select { width: 100%; padding: 13px 14px; font-size: 16px; border-radius: 8px; border: 2px solid #d4c4a0; font-family: Georgia, serif; background: #fffdf7; color: #2c1f0e; margin-bottom: 12px; appearance: none; }
+    select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 0l6 8 6-8z' fill='%235a3e20'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+    textarea { resize: none; height: 90px; }
+
+    /* RATING BOX */
+    .rating-box { background: #fffdf7; border-radius: 10px; padding: 14px; border: 2px solid #d4c4a0; margin-bottom: 12px; }
+    .big-stars { display: flex; gap: 6px; margin-bottom: 4px; }
+    .big-star { font-size: 38px; cursor: pointer; user-select: none; line-height: 1; }
+    .big-star.on { color: #c8860a; }
+    .big-star.off { color: #d4c4a0; }
+    .rating-label { font-size: 14px; color: #6b4f2a; min-height: 20px; }
+
+    /* SORT BUTTONS */
+    .sort-row { display: flex; gap: 8px; margin-bottom: 14px; }
+    .sort-btn { flex: 1; padding: 10px; font-size: 14px; border-radius: 8px; border: 2px solid #d4c4a0; background: #fff; color: #5a3e20; cursor: pointer; font-family: Georgia, serif; }
+    .sort-btn.active { border-color: #c8860a; background: #c8860a; color: #fff; }
+
+    /* DETAIL CARD */
+    .detail-card { background: #fff; border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+    .detail-title { font-size: 22px; font-weight: bold; color: #2c1f0e; line-height: 1.2; }
+    .detail-author { font-size: 16px; color: #5a3e20; margin-top: 6px; }
+    .detail-series { font-size: 14px; color: #8a6a4a; font-style: italic; margin-top: 2px; }
+    .detail-date { font-size: 12px; color: #a08060; margin-top: 4px; }
+    .detail-inner { display: flex; gap: 14px; align-items: flex-start; }
+    .detail-spine { width: 16px; border-radius: 6px; align-self: stretch; min-height: 80px; flex-shrink: 0; }
+
+    /* INFO SECTION */
+    .info-section { background: #fffdf7; border-radius: 12px; padding: 16px; border: 1px solid #e0d0b0; margin-bottom: 14px; }
+
+    /* SUCCESS BANNER */
+    .success-banner { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: #2d7a3a; color: #fff; padding: 13px 26px; border-radius: 12px; font-size: 16px; font-weight: bold; z-index: 999; box-shadow: 0 4px 16px rgba(0,0,0,0.2); white-space: nowrap; }
+
+    /* EMPTY STATE */
+    .empty-state { text-align: center; padding: 40px 20px; color: #8a6a4a; }
+    .empty-icon { font-size: 48px; }
+    .empty-title { font-size: 18px; margin-top: 10px; }
+    .empty-sub { font-size: 14px; margin-top: 6px; }
+
+    /* RESULT COUNT */
+    .result-count { color: #6b4f2a; margin-bottom: 10px; font-size: 13px; }
+
+    /* BACKUP SECTION */
+    .backup-row { display: flex; gap: 8px; margin-top: 8px; }
+    .backup-btn { flex: 1; padding: 12px; font-size: 14px; border-radius: 8px; border: 2px solid #2c5f8a; background: transparent; color: #2c5f8a; cursor: pointer; font-family: Georgia, serif; font-weight: bold; }
+    .restore-btn { flex: 1; padding: 12px; font-size: 14px; border-radius: 8px; border: 2px solid #6b3a7a; background: transparent; color: #6b3a7a; cursor: pointer; font-family: Georgia, serif; font-weight: bold; }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const INITIAL_BOOKS = [{"id":1,"author":"Vince Flynn","series":"Mitch Rapp","title":"Memorial Day"},{"id":2,"author":"Vince Flynn","series":"Mitch Rapp","title":"The 3rd Option"},{"id":3,"author":"Vince Flynn","series":"Mitch Rapp","title":"Transfer of Power"},{"id":4,"author":"Vince Flynn","series":"Mitch Rapp","title":"Separation of Power"},{"id":5,"author":"Vince Flynn","series":"Mitch Rapp","title":"Consent to Kill"},{"id":6,"author":"Vince Flynn","series":"Mitch Rapp","title":"Kill Shot"},{"id":7,"author":"Vince Flynn","series":"Mitch Rapp","title":"American Assassin"},{"id":8,"author":"Vince Flynn","series":"Mitch Rapp","title":"Pursuit of Honor"},{"id":9,"author":"Vince Flynn","series":"Mitch Rapp","title":"The Last Man"},{"id":10,"author":"Vince Flynn","series":"Mitch Rapp","title":"Extreme Measures"},{"id":11,"author":"Vince Flynn","series":"Mitch Rapp","title":"The Survivor"},{"id":12,"author":"Vince Flynn","series":"Mitch Rapp","title":"Order to Kill"},{"id":13,"author":"Vince Flynn","series":"Mitch Rapp","title":"Term Limits"},{"id":14,"author":"Vince Flynn","series":"Mitch Rapp","title":"Enemy of the State"},{"id":15,"author":"Vince Flynn","series":"Mitch Rapp","title":"Executive Power"},{"id":16,"author":"Vince Flynn","series":"Mitch Rapp","title":"Act of Treason"},{"id":17,"author":"Vince Flynn","series":"Mitch Rapp","title":"Total Power"},{"id":18,"author":"Vince Flynn","series":"Mitch Rapp","title":"Lethal Agent"},{"id":19,"author":"Vince Flynn","series":"Mitch Rapp","title":"Red War"},{"id":20,"author":"Vince Flynn","series":"Mitch Rapp","title":"Code Red"},{"id":21,"author":"Vince Flynn","series":"Mitch Rapp","title":"Oath of Loyalty"},{"id":22,"author":"Don Bentley / Tom Clancy","series":"Mitch Rapp","title":"Capture or Kill"},{"id":23,"author":"Don Bentley / Tom Clancy","series":"Mitch Rapp","title":"Protect and Defend"},{"id":24,"author":"Don Bentley / Tom Clancy","series":"Jack Ryan Jr.","title":"Flash Point"},{"id":25,"author":"Michael Crichton","series":"","title":"State of Fear"},{"id":26,"author":"Michael Crichton","series":"","title":"Congo"},{"id":27,"author":"Michael Crichton","series":"","title":"Prey"},{"id":28,"author":"Michael Crichton","series":"","title":"Pirates Latitude"},{"id":29,"author":"Michael Crichton","series":"","title":"Scratch One"},{"id":30,"author":"Michael Crichton","series":"","title":"Sphere"},{"id":31,"author":"Michael Crichton","series":"","title":"Rising Sun"},{"id":32,"author":"Michael Crichton","series":"","title":"The Great Train Robbery"},{"id":33,"author":"Ian Rankin","series":"John Rebus","title":"The Hanging Garden"},{"id":34,"author":"Ian Rankin","series":"John Rebus","title":"The Naming of the Dead"},{"id":35,"author":"Ian Rankin","series":"John Rebus","title":"Watchman"},{"id":36,"author":"Ian Rankin","series":"John Rebus","title":"Rather Be The Devil"},{"id":37,"author":"Ian Rankin","series":"John Rebus","title":"In a House of Lies"},{"id":38,"author":"Ian Rankin","series":"John Rebus","title":"Knots and Crosses"},{"id":39,"author":"Ian Rankin","series":"John Rebus","title":"Resurrection Men"},{"id":40,"author":"Ian Rankin","series":"John Rebus","title":"Fleshmarket Alley"},{"id":41,"author":"Ian Rankin","series":"John Rebus","title":"A Question of Blood"},{"id":42,"author":"Ian Rankin","series":"John Rebus","title":"Exit Music"},{"id":43,"author":"Ian Rankin","series":"John Rebus","title":"The Beat Goes On"},{"id":44,"author":"Clive Cussler","series":"","title":"Black Wind"},{"id":45,"author":"Clive Cussler","series":"","title":"Treasure of Khan"},{"id":46,"author":"Clive Cussler","series":"","title":"Shock Wave"},{"id":47,"author":"Clive Cussler","series":"","title":"Blue Gold"},{"id":48,"author":"Clive Cussler","series":"","title":"Serpent"},{"id":49,"author":"Clive Cussler","series":"","title":"Atlantis Found"},{"id":50,"author":"Clive Cussler","series":"","title":"Fire Ice"},{"id":51,"author":"Clive Cussler","series":"","title":"Skeleton Coast"},{"id":52,"author":"Clive Cussler","series":"","title":"Flood Tide"},{"id":53,"author":"Clive Cussler","series":"","title":"Sahara"},{"id":54,"author":"Clive Cussler","series":"","title":"Deep Six"},{"id":55,"author":"Clive Cussler","series":"","title":"Raise the Titanic"},{"id":56,"author":"Clive Cussler","series":"","title":"Treasure"},{"id":57,"author":"Clive Cussler","series":"","title":"Inca Gold"},{"id":58,"author":"Clive Cussler","series":"","title":"Vixen 03"},{"id":59,"author":"Clive Cussler","series":"","title":"Dragon"},{"id":60,"author":"Clive Cussler","series":"","title":"Pacific Vortex"},{"id":61,"author":"Clive Cussler","series":"","title":"Cyclops"},{"id":62,"author":"Clive Cussler","series":"","title":"Mediterranean Caper"},{"id":63,"author":"Clive Cussler","series":"","title":"Iceberg"},{"id":64,"author":"Clive Cussler","series":"","title":"Gold Buddha"},{"id":65,"author":"Clive Cussler","series":"","title":"The Navigator"},{"id":66,"author":"Clive Cussler","series":"","title":"White Death"},{"id":67,"author":"Clive Cussler","series":"","title":"Night Probe"},{"id":68,"author":"Clive Cussler","series":"","title":"Trojan Odyssey"},{"id":69,"author":"Clive Cussler","series":"","title":"Valhalla Rising"},{"id":70,"author":"Clive Cussler","series":"","title":"Lost City"},{"id":71,"author":"Clive Cussler","series":"","title":"Typhoon Fury"},{"id":72,"author":"Clive Cussler","series":"","title":"Night Hawk"},{"id":73,"author":"Clive Cussler","series":"","title":"Pirate"},{"id":74,"author":"Clive Cussler","series":"","title":"Arctic Drift"},{"id":75,"author":"Clive Cussler","series":"","title":"Sacred Stone"},{"id":76,"author":"Clive Cussler","series":"","title":"Spartan Gold"},{"id":77,"author":"Clive Cussler","series":"","title":"Plague Ship"},{"id":78,"author":"Clive Cussler","series":"","title":"Dark Watch"},{"id":79,"author":"Clive Cussler","series":"","title":"The Chase"},{"id":80,"author":"Clive Cussler","series":"","title":"The Wrecker"},{"id":81,"author":"Clive Cussler","series":"","title":"The Race"},{"id":82,"author":"Clive Cussler","series":"","title":"The Thief"},{"id":83,"author":"Clive Cussler","series":"","title":"The Jungle"},{"id":84,"author":"Clive Cussler","series":"","title":"The Silent Sea"},{"id":85,"author":"Clive Cussler","series":"","title":"The Spy"},{"id":86,"author":"Clive Cussler","series":"","title":"The Kingdom"},{"id":87,"author":"Clive Cussler","series":"","title":"The Tombs"},{"id":88,"author":"Clive Cussler","series":"","title":"Devils Gate"},{"id":89,"author":"Clive Cussler","series":"","title":"The Striker"},{"id":90,"author":"Clive Cussler","series":"","title":"Crescent Dawn"},{"id":91,"author":"Clive Cussler","series":"","title":"The Mayan Secrets"},{"id":92,"author":"Clive Cussler","series":"","title":"The Storm"},{"id":93,"author":"Clive Cussler","series":"","title":"Poseidon's Arrow"},{"id":94,"author":"Clive Cussler","series":"","title":"Zero Hour"},{"id":95,"author":"Clive Cussler","series":"","title":"Eye of Heaven"},{"id":96,"author":"Clive Cussler","series":"","title":"The Bootlegger"},{"id":97,"author":"Clive Cussler","series":"","title":"The Emperor's Revenge"},{"id":98,"author":"Clive Cussler","series":"","title":"The Pharaoh's Secret"},{"id":99,"author":"Clive Cussler","series":"","title":"Ghost Ship"},{"id":100,"author":"Clive Cussler","series":"","title":"The Solomon Curse"},{"id":101,"author":"Clive Cussler","series":"","title":"Havana Storm"},{"id":102,"author":"Clive Cussler","series":"","title":"Odessa Sea"},{"id":103,"author":"Clive Cussler","series":"","title":"The Gangster"},{"id":104,"author":"Clive Cussler","series":"","title":"The Titanic Secret"},{"id":105,"author":"Clive Cussler","series":"","title":"Shadow Tyrants"},{"id":106,"author":"Clive Cussler","series":"","title":"The Rising Sea"},{"id":107,"author":"Clive Cussler","series":"","title":"Sea of Greed"},{"id":108,"author":"Clive Cussler","series":"","title":"The Gray Ghost"},{"id":109,"author":"Clive Cussler","series":"","title":"Journey of the Pharaohs"},{"id":110,"author":"Clive Cussler","series":"","title":"Celtic Empire"},{"id":111,"author":"Clive Cussler","series":"","title":"Corsair"},{"id":112,"author":"Clive Cussler","series":"","title":"The Cut Throat"},{"id":113,"author":"Clive Cussler","series":"","title":"Final Option"},{"id":114,"author":"Clive Cussler","series":"","title":"The Romanov Ransom"},{"id":115,"author":"Clive Cussler","series":"","title":"Polar Shift"},{"id":116,"author":"Clive Cussler","series":"","title":"Medusa"},{"id":117,"author":"Clive Cussler","series":"","title":"The Saboteurs"},{"id":118,"author":"Clive Cussler","series":"","title":"Wrath of Poseidon"},{"id":119,"author":"Clive Cussler","series":"","title":"Hellburner"},{"id":120,"author":"Paul Christopher","series":"","title":"Rembrandt's Ghost"},{"id":121,"author":"Paul Christopher","series":"","title":"Aztec Heresy"},{"id":122,"author":"Ted Bell","series":"Alex Hawke","title":"Hawk"},{"id":123,"author":"Ted Bell","series":"Alex Hawke","title":"Pirate"},{"id":124,"author":"Ted Bell","series":"Alex Hawke","title":"Warriors"},{"id":125,"author":"Ted Bell","series":"Alex Hawke","title":"Warlord"},{"id":126,"author":"Ted Bell","series":"Alex Hawke","title":"Over Kill"},{"id":127,"author":"Ted Bell","series":"Alex Hawke","title":"Assassin"},{"id":128,"author":"Ted Bell","series":"Alex Hawke","title":"Patriot"},{"id":129,"author":"Ted Bell","series":"Alex Hawke","title":"What Comes Around"},{"id":130,"author":"Ted Bell","series":"Alex Hawke","title":"Phantom"},{"id":131,"author":"Ted Bell","series":"Alex Hawke","title":"Dragon Fire"},{"id":132,"author":"Ted Bell","series":"Alex Hawke","title":"Crash Dive"},{"id":133,"author":"Scott Smith","series":"","title":"The Ruins"},{"id":134,"author":"Raymond Khoury","series":"","title":"The Last Templar"},{"id":135,"author":"Brad Thor","series":"Scott Harvath","title":"The First Commandment"},{"id":136,"author":"Brad Thor","series":"Scott Harvath","title":"Hidden Order"},{"id":137,"author":"Brad Thor","series":"Scott Harvath","title":"Full Black"},{"id":138,"author":"Brad Thor","series":"Scott Harvath","title":"The Last Patriot"},{"id":139,"author":"Brad Thor","series":"Scott Harvath","title":"Foreign Agent"},{"id":140,"author":"Brad Thor","series":"Scott Harvath","title":"Spy Master"},{"id":141,"author":"Brad Thor","series":"Scott Harvath","title":"Shadow of Doubt"},{"id":142,"author":"Brad Thor","series":"Scott Harvath","title":"Near Dark"},{"id":143,"author":"Brad Thor","series":"Scott Harvath","title":"Rising Tiger"},{"id":144,"author":"Brad Thor","series":"Scott Harvath","title":"Back Lash"},{"id":145,"author":"Brad Thor","series":"Scott Harvath","title":"Edge of Honor"},{"id":146,"author":"Brad Thor","series":"Scott Harvath","title":"Black Ice"},{"id":147,"author":"Brad Thor","series":"Scott Harvath","title":"Act of War"},{"id":148,"author":"Brad Thor","series":"Scott Harvath","title":"Dead Fall"},{"id":149,"author":"Brad Thor","series":"Scott Harvath","title":"Path of the Assassin"},{"id":150,"author":"Wilbur Smith","series":"","title":"Eye of the Tiger"},{"id":151,"author":"Wilbur Smith","series":"","title":"Pharaoh"},{"id":152,"author":"David Gibbins","series":"","title":"The Tiger Warrior"},{"id":153,"author":"David Gibbins","series":"","title":"Crusader Gold"},{"id":154,"author":"David Gibbins","series":"","title":"Atlantis"},{"id":155,"author":"David Gibbins","series":"","title":"Pharaoh"},{"id":156,"author":"David Gibbins","series":"","title":"The Mask of Troy"},{"id":157,"author":"David Gibbins","series":"","title":"Atlantis God"},{"id":158,"author":"Gabriel Hunt","series":"","title":"At the Well of Eternity"},{"id":159,"author":"C.M. Palov","series":"","title":"Ark of Fire"},{"id":160,"author":"Joseph Heywood","series":"","title":"Ice Hunter"},{"id":161,"author":"Joseph Heywood","series":"","title":"Chasing a Blond Moon"},{"id":162,"author":"Joseph Heywood","series":"","title":"Death Roe"},{"id":163,"author":"Joseph Heywood","series":"","title":"Buckular Dystrophy"},{"id":164,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"Impact"},{"id":165,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"The Ice Limit"},{"id":166,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"Relic"},{"id":167,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"Riptide"},{"id":168,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"Book of the Dead"},{"id":169,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"Reliquary"},{"id":170,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"Brimstone"},{"id":171,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"Two Graves"},{"id":172,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"Cemetery Dance"},{"id":173,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"Crimson Shore"},{"id":174,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"The Cabinet of Curiosities"},{"id":175,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"Cold Vengeance"},{"id":176,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"Still Life with Crows"},{"id":177,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"Dance of Death"},{"id":178,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"The Wheel of Darkness"},{"id":179,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"Fever Dream"},{"id":180,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"Verses for the Dead"},{"id":181,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"City of Endless Night"},{"id":182,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"Crooked River"},{"id":183,"author":"Douglas Preston & Lincoln Child","series":"Nora Kelly","title":"Old Bones"},{"id":184,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"Bloodless"},{"id":185,"author":"Douglas Preston & Lincoln Child","series":"Nora Kelly","title":"Diablo Mesa"},{"id":186,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"The Cabinet of Dr. Leng"},{"id":187,"author":"Douglas Preston & Lincoln Child","series":"Nora Kelly","title":"Thunderhead"},{"id":188,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"Angel of Vengeance"},{"id":189,"author":"Douglas Preston & Lincoln Child","series":"Nora Kelly","title":"Dead Mountain"},{"id":190,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"Bad Lands"},{"id":191,"author":"Douglas Preston & Lincoln Child","series":"Pendergast","title":"Pendergast: The Beginning"},{"id":192,"author":"Eric Van Lustbader","series":"","title":"Blood Trust"},{"id":193,"author":"Lee Child","series":"Jack Reacher","title":"Trip Wire"},{"id":194,"author":"Lee Child","series":"Jack Reacher","title":"Killing Floor"},{"id":195,"author":"Lee Child","series":"Jack Reacher","title":"Die Trying"},{"id":196,"author":"Lee Child","series":"Jack Reacher","title":"Running Blind"},{"id":197,"author":"Lee Child","series":"Jack Reacher","title":"Without Fail"},{"id":198,"author":"Lee Child","series":"Jack Reacher","title":"Echo Burning"},{"id":199,"author":"Lee Child","series":"Jack Reacher","title":"The Hard Way"},{"id":200,"author":"Lee Child","series":"Jack Reacher","title":"Persuader"},{"id":201,"author":"Lee Child","series":"Jack Reacher","title":"Bad Luck and Trouble"},{"id":202,"author":"Lee Child","series":"Jack Reacher","title":"Never Go Back"},{"id":203,"author":"Lee Child","series":"Jack Reacher","title":"The Enemy"},{"id":204,"author":"Lee Child","series":"Jack Reacher","title":"Gone Tomorrow"},{"id":205,"author":"Lee Child","series":"Jack Reacher","title":"61 Hours"},{"id":206,"author":"Lee Child","series":"Jack Reacher","title":"Make Me"},{"id":207,"author":"Lee Child","series":"Jack Reacher","title":"Personal"},{"id":208,"author":"Lee Child","series":"Jack Reacher","title":"Night School"},{"id":209,"author":"Lee Child","series":"Jack Reacher","title":"Worth Dying For"},{"id":210,"author":"Lee Child","series":"Jack Reacher","title":"Bloodline"},{"id":211,"author":"Lee Child","series":"Jack Reacher","title":"One Shot"},{"id":212,"author":"Lee Child","series":"Jack Reacher","title":"The Midnight Line"},{"id":213,"author":"Lee Child","series":"Jack Reacher","title":"A Wanted Man"},{"id":214,"author":"Lee Child","series":"Jack Reacher","title":"The Affair"},{"id":215,"author":"Lee Child","series":"Jack Reacher","title":"Past Tense"},{"id":216,"author":"Lee Child","series":"Jack Reacher","title":"Blue Moon"},{"id":217,"author":"Lee Child","series":"Jack Reacher","title":"Better Off Dead"},{"id":218,"author":"Lee Child","series":"Jack Reacher","title":"In Too Deep"},{"id":219,"author":"James Rollins","series":"","title":"Subterranean"},{"id":220,"author":"James Rollins","series":"","title":"Amazonia"},{"id":221,"author":"James Rollins","series":"","title":"Black Order"},{"id":222,"author":"James Rollins","series":"","title":"Deep Fathom"},{"id":223,"author":"James Rollins","series":"","title":"Map of Bones"},{"id":224,"author":"James Rollins","series":"","title":"Sand Storm"},{"id":225,"author":"James Rollins","series":"","title":"Judas Strain"},{"id":226,"author":"James Rollins","series":"","title":"Devil Colony"},{"id":227,"author":"James Rollins","series":"","title":"Altar of Eden"},{"id":228,"author":"James Rollins","series":"","title":"The Eye of God"},{"id":229,"author":"James Rollins","series":"","title":"Excavation"},{"id":230,"author":"James Rollins","series":"","title":"The Blood Gospel"},{"id":231,"author":"James Rollins","series":"","title":"Innocent Blood"},{"id":232,"author":"James Rollins","series":"","title":"Blood Inferno"},{"id":233,"author":"James Rollins","series":"","title":"The Bone Labyrinth"},{"id":234,"author":"James Rollins","series":"","title":"The 6th Extinction"},{"id":235,"author":"James Rollins","series":"","title":"The Last Oracle"},{"id":236,"author":"James Rollins","series":"","title":"The Doomsday Key"},{"id":237,"author":"James Rollins","series":"","title":"Bloodline"},{"id":238,"author":"James Rollins","series":"Kane (dog)","title":"Tracker"},{"id":239,"author":"James Rollins","series":"","title":"Crucible"},{"id":240,"author":"James Rollins","series":"Kane (dog)","title":"War Hawk"},{"id":241,"author":"James Rollins","series":"","title":"Arkangel"},{"id":242,"author":"James Rollins","series":"","title":"The Last Odyssey"},{"id":243,"author":"James Rollins","series":"","title":"Kingdom of Bones"},{"id":244,"author":"James Rollins","series":"","title":"Seventh Plague"},{"id":245,"author":"James Rollins","series":"","title":"The Midnight Watch"},{"id":246,"author":"Matthew Reilly","series":"Jack West","title":"Temple"},{"id":247,"author":"Matthew Reilly","series":"Jack West","title":"Scarecrow"},{"id":248,"author":"Matthew Reilly","series":"Jack West","title":"Ice Station"},{"id":249,"author":"Matthew Reilly","series":"Jack West","title":"Area 7"},{"id":250,"author":"Matthew Reilly","series":"Jack West","title":"7 Deadly Wonders"},{"id":251,"author":"Matthew Reilly","series":"Jack West","title":"Five Greatest Warriors"},{"id":252,"author":"Matthew Reilly","series":"Jack West","title":"Six Sacred Stone"},{"id":253,"author":"Matthew Reilly","series":"Jack West","title":"The Four Legendary Kingdoms"},{"id":254,"author":"Matthew Reilly","series":"Jack West","title":"The Three Secret Cities"},{"id":255,"author":"Jack Higgins","series":"Sean Dillon","title":"Midnight Runner"},{"id":256,"author":"Jack Higgins","series":"Sean Dillon","title":"Pay the Devil"},{"id":257,"author":"Jack Higgins","series":"Sean Dillon","title":"Day of Reckoning"},{"id":258,"author":"Jack Higgins","series":"Sean Dillon","title":"A Game for Heroes"},{"id":259,"author":"Jack Higgins","series":"Sean Dillon","title":"The Keys of Hell"},{"id":260,"author":"Jack Higgins","series":"Sean Dillon","title":"The Borman Testament"},{"id":261,"author":"Jack Higgins","series":"Sean Dillon","title":"Bad Company"},{"id":262,"author":"Jack Higgins","series":"Sean Dillon","title":"Dark Justice"},{"id":263,"author":"Jack Higgins","series":"Sean Dillon","title":"The White House Connection"},{"id":264,"author":"Jack Higgins","series":"Sean Dillon","title":"Without Mercy"},{"id":265,"author":"Jack Higgins","series":"Sean Dillon","title":"The Khufra Run"},{"id":266,"author":"Jack Higgins","series":"Sean Dillon","title":"Delphi Oracle"},{"id":267,"author":"Jack Higgins","series":"Sean Dillon","title":"The Judas Gate"},{"id":268,"author":"Jack Higgins","series":"Sean Dillon","title":"Rain on the Dead"},{"id":269,"author":"Jack Higgins","series":"Sean Dillon","title":"The Midnight Bell"},{"id":270,"author":"Jack Higgins","series":"Sean Dillon","title":"The Death Trade"},{"id":271,"author":"Jack Higgins","series":"Sean Dillon","title":"The Eagle Has Landed"},{"id":272,"author":"Jack Higgins","series":"Sean Dillon","title":"Touch The Devil"},{"id":273,"author":"Jack Higgins","series":"Sean Dillon","title":"Confessional"},{"id":274,"author":"Jack Higgins","series":"Douglas Munro","title":"Night of the Fox"},{"id":275,"author":"Jack Higgins","series":"Sean Dillon","title":"On Dangerous Ground"},{"id":276,"author":"Jack Higgins","series":"Sean Dillon","title":"Eye of the Storm"},{"id":277,"author":"John Sandford","series":"Virgil Flowers","title":"Rough Country"},{"id":278,"author":"John Sandford","series":"Virgil Flowers","title":"Storm Front"},{"id":279,"author":"John Sandford","series":"Virgil Flowers","title":"Bloody Genius"},{"id":280,"author":"John Sandford","series":"Virgil Flowers","title":"Shock Wave"},{"id":281,"author":"John Sandford","series":"Virgil Flowers","title":"Holy Ghost"},{"id":282,"author":"John Sandford","series":"Virgil Flowers","title":"Escape Clause"},{"id":283,"author":"John Sandford","series":"Virgil Flowers","title":"Bad Blood"},{"id":284,"author":"John Sandford","series":"Virgil Flowers","title":"Deep Freeze"},{"id":285,"author":"John Sandford","series":"Virgil Flowers","title":"Dark of the Moon"},{"id":286,"author":"John Sandford","series":"Virgil Flowers","title":"Deadline"},{"id":287,"author":"John Sandford","series":"Virgil Flowers","title":"Mad River"},{"id":288,"author":"John Sandford","series":"Virgil Flowers","title":"Heat Lightning"},{"id":289,"author":"John Sandford","series":"Davenport","title":"Rules of Prey"},{"id":290,"author":"John Sandford","series":"Davenport","title":"Righteous Prey"},{"id":291,"author":"John Sandford","series":"Davenport","title":"Sudden Prey"},{"id":292,"author":"John Sandford","series":"Davenport","title":"Buried Prey"},{"id":293,"author":"John Sandford","series":"Davenport","title":"Golden Prey"},{"id":294,"author":"John Sandford","series":"Davenport","title":"Wicked Prey"},{"id":295,"author":"Brad Meltzer","series":"","title":"The Inner Circle"},{"id":296,"author":"Brad Meltzer","series":"Zig","title":"The Escape Artist"},{"id":297,"author":"Brad Meltzer","series":"Zig","title":"The Lightning Rod"},{"id":298,"author":"Lincoln Child","series":"","title":"Lethal Velocity"},{"id":299,"author":"Lincoln Child","series":"","title":"Deep Storm"},{"id":300,"author":"Steve Berry","series":"Cotton Malone","title":"Patriot Threat"},{"id":301,"author":"Steve Berry","series":"Cotton Malone","title":"The Jefferson Key"},{"id":302,"author":"Steve Berry","series":"Cotton Malone","title":"The Emperor's Tomb"},{"id":303,"author":"Steve Berry","series":"Cotton Malone","title":"The Alexandria Link"},{"id":304,"author":"Steve Berry","series":"Cotton Malone","title":"The Romanov Prophecy"},{"id":305,"author":"Steve Berry","series":"Cotton Malone","title":"The Paris Vendetta"},{"id":306,"author":"Steve Berry","series":"Cotton Malone","title":"The 14th Colony"},{"id":307,"author":"Steve Berry","series":"Cotton Malone","title":"The Templar Legacy"},{"id":308,"author":"Steve Berry","series":"Cotton Malone","title":"The Warsaw Protocol"},{"id":309,"author":"Steve Berry","series":"Cotton Malone","title":"The Lincoln Myth"},{"id":310,"author":"Steve Berry","series":"Cotton Malone","title":"The King's Deception"},{"id":311,"author":"Steve Berry","series":"Cotton Malone","title":"The Malta Exchange"},{"id":312,"author":"Steve Berry","series":"Cotton Malone","title":"The Kaiser's Web"},{"id":313,"author":"Steve Berry","series":"Cotton Malone","title":"The Columbus Affair"},{"id":314,"author":"Steve Berry","series":"Cotton Malone","title":"The Tudor Plot"},{"id":315,"author":"Steve Berry","series":"Cotton Malone","title":"The Last Kingdom"},{"id":316,"author":"Steve Berry","series":"Cotton Malone","title":"The Charlemagne Pursuit"},{"id":317,"author":"Steve Berry","series":"Cotton Malone","title":"The Devil's Bible"},{"id":318,"author":"C.J. Box","series":"Joe Pickett","title":"Shots Fire"},{"id":319,"author":"C.J. Box","series":"Joe Pickett","title":"Off The Grid"},{"id":320,"author":"C.J. Box","series":"Joe Pickett","title":"Wolf Pack"},{"id":321,"author":"C.J. Box","series":"Joe Pickett","title":"Savage Run"},{"id":322,"author":"C.J. Box","series":"Joe Pickett","title":"Long Range"},{"id":323,"author":"C.J. Box","series":"Joe Pickett","title":"The Bitterroots"},{"id":324,"author":"C.J. Box","series":"Joe Pickett","title":"Trophy Hunt"},{"id":325,"author":"C.J. Box","series":"Joe Pickett","title":"Out of Range"},{"id":326,"author":"C.J. Box","series":"Joe Pickett","title":"Dark Sky"},{"id":327,"author":"C.J. Box","series":"Joe Pickett","title":"Vicious Circle"},{"id":328,"author":"C.J. Box","series":"Joe Pickett","title":"The Promise"},{"id":329,"author":"C.J. Box","series":"Joe Pickett","title":"The Disappeared"},{"id":330,"author":"C.J. Box","series":"Joe Pickett","title":"The First Rule"},{"id":331,"author":"C.J. Box","series":"Joe Pickett","title":"Shadows Reel"},{"id":332,"author":"C.J. Box","series":"Joe Pickett","title":"Open Season"},{"id":333,"author":"C.J. Box","series":"Joe Pickett","title":"Storm Watch"},{"id":334,"author":"C.J. Box","series":"Joe Pickett","title":"Winter Kill"},{"id":335,"author":"C.J. Box","series":"Joe Pickett","title":"The Maze"},{"id":336,"author":"C.J. Box","series":"Joe Pickett","title":"Free Fire"},{"id":337,"author":"C.J. Box","series":"Joe Pickett","title":"Cold Wind"},{"id":338,"author":"C.J. Box","series":"Joe Pickett","title":"Blood Trail"},{"id":339,"author":"C.J. Box","series":"Joe Pickett","title":"Force of Nature"},{"id":340,"author":"C.J. Box","series":"Joe Pickett","title":"Below Zero"},{"id":341,"author":"C.J. Box","series":"Joe Pickett","title":"Nowhere to Run"},{"id":342,"author":"C.J. Box","series":"Joe Pickett","title":"A Dangerous Man"},{"id":343,"author":"C.J. Box","series":"Joe Pickett","title":"Three Inch Teeth"},{"id":344,"author":"C.J. Box","series":"Joe Pickett","title":"The Crossroads"},{"id":345,"author":"Victoria Houston","series":"","title":"Wolf Hollow"},{"id":346,"author":"Victoria Houston","series":"","title":"Hidden in the Pines"},{"id":347,"author":"Victoria Houston","series":"","title":"Battle Mountain"},{"id":348,"author":"Fredrick Forsyth","series":"","title":"The Kill List"},{"id":349,"author":"Nelson DeMille","series":"","title":"The Cuban Affair"},{"id":350,"author":"Nelson DeMille","series":"","title":"The Charm School"},{"id":351,"author":"Nelson DeMille","series":"John Corey","title":"Plum Island"},{"id":352,"author":"Nelson DeMille","series":"John Corey","title":"The Lions Game"},{"id":353,"author":"Nelson DeMille","series":"John Corey","title":"Night Fall"},{"id":354,"author":"Nelson DeMille","series":"John Corey","title":"Wild Fire"},{"id":355,"author":"Nelson DeMille","series":"","title":"The Deserter"},{"id":356,"author":"Nelson DeMille","series":"John Corey","title":"The Panther"},{"id":357,"author":"Nelson DeMille","series":"","title":"Gold Coast"},{"id":358,"author":"Nelson DeMille","series":"","title":"Radiant Angle"},{"id":359,"author":"Nelson DeMille","series":"","title":"The Maze"},{"id":360,"author":"L.T. Ryan","series":"","title":"Noble Beginnings"},{"id":361,"author":"Paul Doiron","series":"Mike Bowditch","title":"The Poacher's Son"},{"id":362,"author":"Paul Doiron","series":"Mike Bowditch","title":"Trespasser"},{"id":363,"author":"Paul Doiron","series":"Mike Bowditch","title":"Bad Little Falls"},{"id":364,"author":"Paul Doiron","series":"Mike Bowditch","title":"The Precipice"},{"id":365,"author":"Paul Doiron","series":"Mike Bowditch","title":"Massacre Pond"},{"id":366,"author":"Paul Doiron","series":"Mike Bowditch","title":"The Bone Orchard"},{"id":367,"author":"Paul Doiron","series":"Mike Bowditch","title":"Stay Hidden"},{"id":368,"author":"Paul Doiron","series":"Mike Bowditch","title":"One Last Lie"},{"id":369,"author":"Paul Doiron","series":"Mike Bowditch","title":"Widowmaker"},{"id":370,"author":"Paul Doiron","series":"Mike Bowditch","title":"Dead by Dawn"},{"id":371,"author":"Paul Doiron","series":"Mike Bowditch","title":"Hatchet Island"},{"id":372,"author":"Paul Doiron","series":"Mike Bowditch","title":"Dead Man's Wake"},{"id":373,"author":"Paul Doiron","series":"Mike Bowditch","title":"Knife Creek"},{"id":374,"author":"Paul Doiron","series":"Mike Bowditch","title":"Almost Midnight"},{"id":375,"author":"Paul Doiron","series":"Mike Bowditch","title":"The Imposter"},{"id":376,"author":"Paul Doiron","series":"Mike Bowditch","title":"Pitch Dark"},{"id":377,"author":"Craig Johnson","series":"Longmire","title":"Cold Dish"},{"id":378,"author":"Craig Johnson","series":"Longmire","title":"An Obvious Fact"},{"id":379,"author":"Craig Johnson","series":"Longmire","title":"Trophy Hunter"},{"id":380,"author":"Craig Johnson","series":"Longmire","title":"Land of Wolves"},{"id":381,"author":"Craig Johnson","series":"Longmire","title":"The Highwayman"},{"id":382,"author":"Craig Johnson","series":"Longmire","title":"Another Man's Moccasins"},{"id":383,"author":"Craig Johnson","series":"Longmire","title":"The Depth of Winter"},{"id":384,"author":"Craig Johnson","series":"Longmire","title":"The Dark Horse"},{"id":385,"author":"Craig Johnson","series":"Longmire","title":"Death Without Company"},{"id":386,"author":"Craig Johnson","series":"Longmire","title":"Hell is Empty"},{"id":387,"author":"Craig Johnson","series":"Longmire","title":"The Western Star"},{"id":388,"author":"Craig Johnson","series":"Longmire","title":"Junkyard Dog"},{"id":389,"author":"Craig Johnson","series":"Longmire","title":"Kindness Goes Unpunished"},{"id":390,"author":"Craig Johnson","series":"Longmire","title":"Next To Last Stand"},{"id":391,"author":"Craig Johnson","series":"Longmire","title":"A Serpent's Tooth"},{"id":392,"author":"Craig Johnson","series":"Longmire","title":"Any Other Name"},{"id":393,"author":"Craig Johnson","series":"Longmire","title":"Wait For Signs"},{"id":394,"author":"Craig Johnson","series":"Longmire","title":"As the Crow Flies"},{"id":395,"author":"Craig Johnson","series":"Longmire","title":"Daughter of the Morning Star"},{"id":396,"author":"Craig Johnson","series":"Longmire","title":"Tooth and Claw"},{"id":397,"author":"Craig Johnson","series":"Longmire","title":"Divorce Horse"},{"id":398,"author":"Robert Crais","series":"Elvis Cole & Joe Pike","title":"The Sentry"},{"id":399,"author":"Robert Crais","series":"Elvis Cole & Joe Pike","title":"The Wanted"},{"id":400,"author":"Robert Crais","series":"Elvis Cole & Joe Pike","title":"Indigo Slam"},{"id":401,"author":"Robert Crais","series":"Elvis Cole & Joe Pike","title":"The Last Detective"},{"id":402,"author":"Robert Crais","series":"Elvis Cole & Joe Pike","title":"The Monkey's Raincoat"},{"id":403,"author":"Robert Crais","series":"Elvis Cole & Joe Pike","title":"Stalking the Angel"},{"id":404,"author":"Robert Crais","series":"Joe Talley","title":"Hostage"},{"id":405,"author":"Robert Crais","series":"Elvis Cole & Joe Pike","title":"Free Fall"},{"id":406,"author":"Robert Crais","series":"Elvis Cole & Joe Pike","title":"The First Rule"},{"id":407,"author":"Robert Crais","series":"Elvis Cole & Joe Pike","title":"Lullaby Town"},{"id":408,"author":"Robert Crais","series":"Elvis Cole & Joe Pike","title":"Sunset Express"},{"id":409,"author":"Robert Crais","series":"Elvis Cole & Joe Pike","title":"Voodoo River"},{"id":410,"author":"Robert Crais","series":"Elvis Cole & Joe Pike","title":"Racing the Light"},{"id":411,"author":"Robert Crais","series":"Elvis Cole & Joe Pike","title":"Taken"},{"id":412,"author":"Robert Crais","series":"Elvis Cole & Joe Pike","title":"Chasing Darkness"},{"id":413,"author":"Robert Crais","series":"Elvis Cole & Joe Pike","title":"The Two Minute Rule"},{"id":414,"author":"Robert Crais","series":"Elvis Cole & Joe Pike","title":"LA Requiem"},{"id":415,"author":"Robert Crais","series":"Elvis Cole & Joe Pike","title":"The Promise"},{"id":416,"author":"Robert Crais","series":"Elvis Cole & Joe Pike","title":"The Forgotten Man"},{"id":417,"author":"Robert Crais","series":"Elvis Cole & Joe Pike","title":"A Dangerous Man"},{"id":418,"author":"Robert Crais","series":"Elvis Cole & Joe Pike","title":"The Big Empty"},{"id":419,"author":"Robert Crais","series":"Scott James & Maggie","title":"Suspect"},{"id":420,"author":"Jack Mars","series":"Agent Zero","title":"Zero"},{"id":421,"author":"Jack Mars","series":"Agent Zero","title":"Target Zero"},{"id":422,"author":"Jack Mars","series":"Agent Zero","title":"Hunting Zero"},{"id":423,"author":"Jack Mars","series":"Agent Zero","title":"Trapping Zero"},{"id":424,"author":"William Krueger","series":"Cork O'Connor","title":"Iron Lake"},{"id":425,"author":"William Krueger","series":"Cork O'Connor","title":"Boundary Waters"},{"id":426,"author":"William Krueger","series":"Cork O'Connor","title":"Purgatory Ridge"},{"id":427,"author":"William Krueger","series":"Cork O'Connor","title":"Blood Hollow"},{"id":428,"author":"William Krueger","series":"Cork O'Connor","title":"Sulfur Springs"},{"id":429,"author":"William Krueger","series":"Cork O'Connor","title":"Lightning Strike"},{"id":430,"author":"William Krueger","series":"Cork O'Connor","title":"Fox Creek"},{"id":431,"author":"William Krueger","series":"Cork O'Connor","title":"Spirit Crossing"},{"id":432,"author":"David Baldacci","series":"Amos Decker","title":"Memory Man"},{"id":433,"author":"David Baldacci","series":"Amos Decker","title":"The Last Mile"},{"id":434,"author":"David Baldacci","series":"Amos Decker","title":"The Fix"},{"id":435,"author":"David Baldacci","series":"Amos Decker","title":"The Fallen"},{"id":436,"author":"David Baldacci","series":"Amos Decker","title":"Redemption"},{"id":437,"author":"David Baldacci","series":"John Puller","title":"Zero Day"},{"id":438,"author":"David Baldacci","series":"John Puller","title":"The Forgotten"},{"id":439,"author":"David Baldacci","series":"Amos Decker","title":"Walk the Wire"},{"id":440,"author":"David Baldacci","series":"John Puller","title":"The Escape"},{"id":441,"author":"David Baldacci","series":"King & Maxwell","title":"Hour Game"},{"id":442,"author":"David Baldacci","series":"John Puller","title":"No Man's Land"},{"id":443,"author":"David Baldacci","series":"King & Maxwell","title":"Split Second"},{"id":444,"author":"David Baldacci","series":"Amos Decker","title":"Long Shadows"},{"id":445,"author":"David Baldacci","series":"Robie & Reel","title":"The Target"},{"id":446,"author":"David Baldacci","series":"Robie & Reel","title":"The Hit"},{"id":447,"author":"David Baldacci","series":"Robie & Reel","title":"The Guilty"},{"id":448,"author":"David Baldacci","series":"Robie & Reel","title":"End Game"},{"id":449,"author":"David Baldacci","series":"","title":"The Edge"},{"id":450,"author":"David Baldacci","series":"","title":"Dream Town"},{"id":451,"author":"David Baldacci","series":"","title":"The 6:20 Man"},{"id":452,"author":"Will Adams","series":"Daniel Knox","title":"The Alexander Cipher"},{"id":453,"author":"Michael Connelly","series":"Harry Bosch","title":"The Black Echo"},{"id":454,"author":"Michael Connelly","series":"Harry Bosch","title":"The Drop"},{"id":455,"author":"Michael Connelly","series":"Harry Bosch","title":"City of Bones"},{"id":456,"author":"Michael Connelly","series":"Harry Bosch","title":"Dark Sacred Night"},{"id":457,"author":"Michael Connelly","series":"Harry Bosch","title":"Concrete Blond"},{"id":458,"author":"Michael Connelly","series":"Harry Bosch","title":"The Night Fire"},{"id":459,"author":"Michael Connelly","series":"Harry Bosch","title":"Desert Star"},{"id":460,"author":"Michael Connelly","series":"Harry Bosch","title":"The Wrong Side of Goodbye"},{"id":461,"author":"Michael Connelly","series":"Harry Bosch","title":"The Reversal"},{"id":462,"author":"Michael Connelly","series":"Harry Bosch","title":"Resurrection Walk"},{"id":463,"author":"Stephen Hunter","series":"Bob Lee Swagger","title":"Black Light"},{"id":464,"author":"Stephen Hunter","series":"Bob Lee Swagger","title":"Time to Hunt"},{"id":465,"author":"Stephen Hunter","series":"Bob Lee Swagger","title":"Shooter"},{"id":466,"author":"Stephen Hunter","series":"Bob Lee Swagger","title":"G-Man"},{"id":467,"author":"Stephen Hunter","series":"Bob Lee Swagger","title":"Point of Impact"},{"id":468,"author":"Stephen Hunter","series":"Bob Lee Swagger","title":"Sniper's Honor"},{"id":469,"author":"Jeff Nania","series":"","title":"Figure Eight"},{"id":470,"author":"Jeff Nania","series":"","title":"Spider Lake"},{"id":471,"author":"Jeff Nania","series":"","title":"Bough Cutter"},{"id":472,"author":"Jeff Nania","series":"","title":"Muskie Run"},{"id":473,"author":"Jeff Nania","series":"","title":"River Gold"},{"id":474,"author":"Diane Capri","series":"","title":"Don't Know Jack"},{"id":475,"author":"Diane Capri","series":"","title":"Jack in the Box"},{"id":476,"author":"Diane Capri","series":"","title":"Jack in the Green"},{"id":477,"author":"Diane Capri","series":"","title":"Jack Frost"},{"id":478,"author":"Marc Cameron","series":"Cutter","title":"Open Carry"},{"id":479,"author":"Marc Cameron","series":"Cutter","title":"Stone Cross"},{"id":480,"author":"Marc Cameron","series":"Jericho Quinn","title":"Brute Force"},{"id":481,"author":"Marc Cameron","series":"Cutter","title":"Bone Rattle"},{"id":482,"author":"Marc Cameron","series":"Cutter","title":"Cold Snap"},{"id":483,"author":"Marc Cameron","series":"Jericho Quinn","title":"Day Zero"},{"id":484,"author":"Marc Cameron","series":"Jericho Quinn","title":"Time of Attack"},{"id":485,"author":"Marc Cameron","series":"Jericho Quinn","title":"State of Emergency"},{"id":486,"author":"Marc Cameron","series":"Cutter","title":"Bad River"},{"id":487,"author":"Marc Cameron","series":"Jericho Quinn","title":"Field of Fire"},{"id":488,"author":"Marc Cameron","series":"Cutter","title":"Dead Line"},{"id":489,"author":"Marc Cameron","series":"Jericho Quinn","title":"The Triple Frontier"},{"id":490,"author":"Marc Cameron","series":"Cutter","title":"Drop Dead"},{"id":491,"author":"Nick Petrie","series":"Peter Ash","title":"Burning Bright"},{"id":492,"author":"Nick Petrie","series":"Peter Ash","title":"Light it Up"},{"id":493,"author":"James Chandler","series":"Sam Johnston","title":"Misjudged"},{"id":494,"author":"James Chandler","series":"Sam Johnston","title":"One and Done"},{"id":495,"author":"John Grisham","series":"","title":"Camino Island"},{"id":496,"author":"Tom Clancy","series":"Moore","title":"Against All Enemies"},{"id":497,"author":"Carl Hiaasen","series":"","title":"Basket Case"},{"id":498,"author":"Walter Mosley","series":"","title":"The Long Fall"},{"id":499,"author":"Jeffrey Anderson","series":"","title":"Second Genesis"},{"id":500,"author":"Jeff Buick","series":"","title":"African Ice"},{"id":501,"author":"S.L. Linnea","series":"","title":"Beyond Eden"},{"id":502,"author":"William Tapply","series":"","title":"Bitch Creek"},{"id":503,"author":"Dave Hagberg","series":"","title":"Dance with the Dragon"},{"id":504,"author":"Paul Kemprecos","series":"Matt Hawkins","title":"The Emerald Scepter"}];
+const STORAGE_KEY = 'dads-book-tracker-v1';
+const RATINGLABELS = ['','Not great','It was OK','Pretty good','Really good','Loved it!'];
+const SPINE_COLORS = ['#c8860a','#2c5f8a','#7a3a2c','#2a6b4a','#6b3a7a','#8a6a2c','#2c4a7a','#7a2c4a'];
+
+function getColor(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = str.charCodeAt(i) + ((h << 5) - h);
+  return SPINE_COLORS[Math.abs(h) % SPINE_COLORS.length];
+}
+
+function loadData() {
+  try { const r = localStorage.getItem(STORAGE_KEY); if (r) return JSON.parse(r); } catch {}
+  return null;
+}
+function saveData(books) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ books })); } catch {}
+}
+
+// --- STATE ---
+let state = {
+  books: [],
+  view: 'home',
+  searchQuery: '',
+  selectedBookId: null,
+  filterAuthor: 'All',
+  sortBy: 'author',
+  addForm: { title: '', author: '', series: '', notes: '', rating: 0 },
+  tempRating: 0,
+  tempNotes: '',
+  successMsg: '',
+  successTimer: null,
+};
+
+function initBooks() {
+  const saved = loadData();
+  if (saved && saved.books && saved.books.length > 0) return saved.books;
+  return INITIAL_BOOKS.map(b => ({ ...b, read: true, rating: 0, notes: '', dateAdded: null }));
+}
+state.books = initBooks();
+
+function showSuccess(msg) {
+  if (state.successTimer) clearTimeout(state.successTimer);
+  state.successMsg = msg;
+  state.successTimer = setTimeout(() => { state.successMsg = ''; render(); }, 2200);
+}
+
+function rateBook(id, star) {
+  state.books = state.books.map(b => b.id === id ? { ...b, rating: b.rating === star ? 0 : star } : b);
+  saveData(state.books);
+  render();
+}
+
+function saveDetail() {
+  state.books = state.books.map(b => b.id === state.selectedBookId ? { ...b, rating: state.tempRating, notes: state.tempNotes } : b);
+  saveData(state.books);
+  showSuccess('Saved!');
+  render();
+}
+
+function toggleRead(id) {
+  state.books = state.books.map(b => b.id === id ? { ...b, read: !b.read } : b);
+  saveData(state.books);
+  render();
+}
+
+function addBook() {
+  const f = state.addForm;
+  if (!f.title.trim() || !f.author.trim()) return;
+  const newBook = { id: Date.now(), title: f.title.trim(), author: f.author.trim(), series: f.series.trim(), notes: f.notes.trim(), read: true, rating: f.rating || 0, dateAdded: new Date().toLocaleDateString() };
+  state.books = [...state.books, newBook];
+  saveData(state.books);
+  state.addForm = { title: '', author: '', series: '', notes: '', rating: 0 };
+  showSuccess('Book added!');
+  state.view = 'home';
+  render();
+}
+
+function exportBackup() {
+  const data = JSON.stringify({ books: state.books }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'my-books-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showSuccess('Backup saved!');
+}
+
+function importBackup(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.books && Array.isArray(data.books)) {
+        state.books = data.books;
+        saveData(state.books);
+        showSuccess('Backup restored! ' + data.books.length + ' books loaded.');
+        render();
+      }
+    } catch { alert('Could not read that backup file. Please try again.'); }
+  };
+  reader.readAsText(file);
+}
+
+function getFilteredBooks() {
+  const q = state.searchQuery.toLowerCase();
+  return state.books
+    .filter(b => {
+      const matchQ = !q || b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q) || (b.series && b.series.toLowerCase().includes(q));
+      const matchA = state.filterAuthor === 'All' || b.author === state.filterAuthor;
+      return matchQ && matchA;
+    })
+    .sort((a, b) => {
+      if (state.sortBy === 'author') return a.author.localeCompare(b.author) || a.title.localeCompare(b.title);
+      if (state.sortBy === 'title') return a.title.localeCompare(b.title);
+      if (state.sortBy === 'rating') return (b.rating || 0) - (a.rating || 0);
+      return 0;
+    });
+}
+
+function starsHTML(bookId, rating, big) {
+  const sz = big ? 'big-star' : 'star';
+  return [1,2,3,4,5].map(s =>
+    `<span class="${sz} ${s <= rating ? 'on' : 'off'}" onclick="rateBook(${bookId},${s})">★</span>`
+  ).join('');
+}
+
+function navHTML(active) {
+  const tabs = [
+    { id: 'home', label: '🏠 Home' },
+    { id: 'browse', label: '📖 Browse' },
+    { id: 'search', label: '🔍 Search' },
+    { id: 'add', label: '➕ Add Book' },
+  ];
+  return `<div class="nav">` + tabs.map(t =>
+    `<button class="${active === t.id ? 'active' : ''}" onclick="navigate('${t.id}')">${t.label}</button>`
+  ).join('') + `</div>`;
+}
+
+function bookCardHTML(b) {
+  const color = getColor(b.author);
+  const label = b.rating > 0 ? RATINGLABELS[b.rating] : 'Tap stars to rate';
+  return `
+    <div class="book-card">
+      <div class="book-spine" style="background:${color}" onclick="openDetail(${b.id})"></div>
+      <div class="book-info" onclick="openDetail(${b.id})">
+        <div class="book-title">${b.title}</div>
+        <div class="book-meta">${b.author}${b.series ? ' · <em>' + b.series + '</em>' : ''}</div>
+      </div>
+      <div class="book-stars">
+        <div class="stars-row">${starsHTML(b.id, b.rating, false)}</div>
+        <div class="star-label" onclick="openDetail(${b.id})">${label}</div>
+      </div>
+    </div>`;
+}
+
+function navigate(v) {
+  state.view = v;
+  state.searchQuery = '';
+  state.filterAuthor = 'All';
+  render();
+}
+
+function openDetail(id) {
+  const b = state.books.find(x => x.id === id);
+  if (!b) return;
+  state.selectedBookId = id;
+  state.tempRating = b.rating || 0;
+  state.tempNotes = b.notes || '';
+  state.view = 'detail';
+  render();
+}
+
+function render() {
+  const app = document.getElementById('app');
+  const books = state.books;
+  const readCount = books.filter(b => b.read).length;
+  const fiveStars = books.filter(b => b.rating >= 5).length;
+  const authorCount = new Set(books.map(b => b.author)).size;
+  const authors = ['All', ...Array.from(new Set(books.map(b => b.author))).sort()];
+  const filtered = getFilteredBooks();
+
+  let content = '';
+  const header = `<div class="header"><h1>📚 My Book Tracker</h1><p>Your personal reading library</p></div>`;
+
+  // HOME
+  if (state.view === 'home') {
+    const topRated = [...books].filter(b => b.rating > 0).sort((a,b) => b.rating - a.rating).slice(0,5);
+    const recentAdded = [...books].filter(b => b.dateAdded).sort((a,b) => b.id - a.id).slice(0,3);
+    content = `
+      <div class="stats-row">
+        <div class="stat-card" style="background:#fff3cc"><div class="stat-num">${books.length}</div><div class="stat-label">Total Books</div></div>
+        <div class="stat-card" style="background:#d4edda"><div class="stat-num">${readCount}</div><div class="stat-label">Books Read</div></div>
+        <div class="stat-card" style="background:#fce4d0"><div class="stat-num">${fiveStars}</div><div class="stat-label">5-Star Reads</div></div>
+        <div class="stat-card" style="background:#e8e0f0"><div class="stat-num">${authorCount}</div><div class="stat-label">Authors</div></div>
+      </div>
+      ${topRated.length > 0 ? `<div class="section-title">⭐ Your Top Rated Books</div>` + topRated.map(bookCardHTML).join('') : ''}
+      ${recentAdded.length > 0 ? `<div class="section-title">🆕 Recently Added</div>` + recentAdded.map(bookCardHTML).join('') : ''}
+      <div class="section-title">Quick Actions</div>
+      <button class="big-btn" style="background:#c8860a" onclick="navigate('browse')">Browse All Books by Author</button>
+      <button class="big-btn" style="background:#2c5f8a" onclick="navigate('search')">Search for a Book or Author</button>
+      <button class="big-btn" style="background:#2a6b4a" onclick="navigate('add')">Add a New Book I've Read</button>
+      <div class="section-title">💾 Backup My Ratings</div>
+      <p style="font-size:13px;color:#6b4f2a;margin-bottom:10px;">Save a backup file to protect your ratings and notes. Restore it anytime if needed.</p>
+      <div class="backup-row">
+        <button class="backup-btn" onclick="exportBackup()">⬇️ Save Backup</button>
+        <button class="restore-btn" onclick="document.getElementById('restore-input').click()">⬆️ Restore Backup</button>
+      </div>
+      <input type="file" id="restore-input" accept=".json" style="display:none" onchange="importBackup(this.files[0])">
+    `;
+  }
+
+  // BROWSE
+  else if (state.view === 'browse') {
+    const authorOptions = authors.map(a => `<option value="${a}" ${state.filterAuthor === a ? 'selected' : ''}>${a}</option>`).join('');
+    content = `
+      <label class="field-label">Filter by Author</label>
+      <select onchange="state.filterAuthor=this.value;render()">${authorOptions}</select>
+      <div class="sort-row">
+        <button class="sort-btn ${state.sortBy==='author'?'active':''}" onclick="state.sortBy='author';render()">👤 Author</button>
+        <button class="sort-btn ${state.sortBy==='title'?'active':''}" onclick="state.sortBy='title';render()">🔤 Title</button>
+        <button class="sort-btn ${state.sortBy==='rating'?'active':''}" onclick="state.sortBy='rating';render()">⭐ Rating</button>
+      </div>
+      <div class="result-count">Showing ${filtered.length} books</div>
+      ${filtered.map(bookCardHTML).join('')}
+    `;
+  }
+
+  // SEARCH
+  else if (state.view === 'search') {
+    const results = filtered.length;
+    content = `
+      <label class="field-label">Search by title, author, or character name</label>
+      <input type="text" value="${state.searchQuery.replace(/"/g,'&quot;')}" placeholder="e.g. Reacher, Cussler, Sahara..." oninput="state.searchQuery=this.value;render()" />
+      ${state.searchQuery ? `<div class="result-count">Found ${results} result${results !== 1 ? 's' : ''}</div>` : ''}
+      ${filtered.map(bookCardHTML).join('')}
+      ${state.searchQuery && results === 0 ? `
+        <div class="empty-state">
+          <div class="empty-icon">🔍</div>
+          <div class="empty-title">No books found</div>
+          <div class="empty-sub">Try a different search, or add this book!</div>
+          <button class="big-btn" style="background:#2a6b4a;margin-top:16px;width:auto;padding:14px 28px" onclick="navigate('add')">➕ Add This Book</button>
+        </div>` : ''}
+    `;
+  }
+
+  // ADD BOOK
+  else if (state.view === 'add') {
+    const f = state.addForm;
+    const canSave = f.title.trim() && f.author.trim();
+    content = `
+      <label class="field-label">Book Title *</label>
+      <input type="text" value="${f.title.replace(/"/g,'&quot;')}" placeholder="e.g. Killing Floor" oninput="state.addForm.title=this.value" />
+      <label class="field-label">Author *</label>
+      <input type="text" value="${f.author.replace(/"/g,'&quot;')}" placeholder="e.g. Lee Child" oninput="state.addForm.author=this.value" />
+      <label class="field-label">Series or Main Character (optional)</label>
+      <input type="text" value="${f.series.replace(/"/g,'&quot;')}" placeholder="e.g. Jack Reacher" oninput="state.addForm.series=this.value" />
+      <label class="field-label">Notes (optional)</label>
+      <textarea placeholder="Anything you want to remember..." oninput="state.addForm.notes=this.value">${f.notes}</textarea>
+      <label class="field-label">My Rating (optional)</label>
+      <div class="rating-box">
+        <div class="big-stars">${[1,2,3,4,5].map(s => `<span class="big-star ${s <= f.rating ? 'on' : 'off'}" onclick="state.addForm.rating=(state.addForm.rating===${s}?0:${s});render()">★</span>`).join('')}</div>
+        <div class="rating-label">${f.rating > 0 ? RATINGLABELS[f.rating] : 'Tap a star to rate'}</div>
+      </div>
+      <button class="big-btn" style="background:${canSave ? '#2a6b4a' : '#a0927a'}" onclick="addBook()" ${!canSave ? 'disabled' : ''}>✅ Save Book</button>
+      <button class="big-btn" style="background:#7a3a2c" onclick="navigate('home')">Cancel</button>
+    `;
+  }
+
+  // DETAIL
+  else if (state.view === 'detail') {
+    const b = books.find(x => x.id === state.selectedBookId);
+    if (!b) { state.view = 'browse'; render(); return; }
+    const color = getColor(b.author);
+    content = `
+      <button class="back-btn" onclick="navigate('browse')">← Back to Browse</button>
+      <div class="detail-card" style="border:2px solid ${color}">
+        <div class="detail-inner">
+          <div class="detail-spine" style="background:${color}"></div>
+          <div>
+            <div class="detail-title">${b.title}</div>
+            <div class="detail-author">${b.author}</div>
+            ${b.series ? `<div class="detail-series">Series: ${b.series}</div>` : ''}
+            ${b.dateAdded ? `<div class="detail-date">Added: ${b.dateAdded}</div>` : ''}
+          </div>
+        </div>
+      </div>
+      <div class="info-section">
+        <label class="field-label">My Rating</label>
+        <div class="big-stars">${[1,2,3,4,5].map(s => `<span class="big-star ${s <= state.tempRating ? 'on' : 'off'}" onclick="state.tempRating=(state.tempRating===${s}?0:${s});render()">★</span>`).join('')}</div>
+        <div class="rating-label" style="margin-top:4px">${state.tempRating > 0 ? RATINGLABELS[state.tempRating] : 'Tap a star to rate'}</div>
+      </div>
+      <div class="info-section">
+        <label class="field-label">My Notes</label>
+        <textarea placeholder="Write anything you want to remember..." oninput="state.tempNotes=this.value">${b.notes || ''}</textarea>
+      </div>
+      <button class="big-btn" style="background:#2a6b4a" onclick="saveDetail()">💾 Save Rating & Notes</button>
+      <button class="big-btn" style="background:${b.read ? '#7a3a2c' : '#2c5f8a'}" onclick="toggleRead(${b.id});render()">${b.read ? 'Mark as Unread' : '✅ Mark as Read'}</button>
+    `;
+  }
+
+  const success = state.successMsg ? `<div class="success-banner">${state.successMsg}</div>` : '';
+  app.innerHTML = header + navHTML(state.view) + `<div class="body">${content}</div>` + success;
+}
+
+render();
+</script>
+</body>
+</html>
